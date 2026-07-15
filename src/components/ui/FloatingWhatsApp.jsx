@@ -1,10 +1,14 @@
 import { siteConfig } from '../../data/siteConfig';
+import { useSettings } from '../../hooks/useSettings';
 
 export default function FloatingWhatsApp() {
-  if (!siteConfig.contact.whatsapp) return null;
+  const settings = useSettings();
+  const rawPhone = settings.contactPhone || siteConfig.contact.whatsapp;
+  
+  if (!rawPhone) return null;
 
   // Clean the phone number for the wa.me link (remove non-digits, keep leading + if present)
-  const cleanPhone = siteConfig.contact.whatsapp.replace(/[^\d+]/g, '');
+  const cleanPhone = rawPhone.replace(/[^\d+]/g, '');
   const message = encodeURIComponent("Hello! I'm interested in booking a consultation.");
   const waLink = `https://wa.me/${cleanPhone}?text=${message}`;
 

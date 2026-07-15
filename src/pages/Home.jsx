@@ -4,9 +4,12 @@ import { homeImages, brandingImages } from '../data/images';
 import { siteConfig } from '../data/siteConfig';
 import { testimonialsData } from '../data/testimonials';
 import { instagramPosts } from '../data/instagram';
+import { useSettings } from '../hooks/useSettings';
 import SEO from '../components/SEO';
 
 export default function Home() {
+  const settings = useSettings();
+
   useEffect(() => {
     const observerOptions = {
         root: null,
@@ -91,8 +94,8 @@ export default function Home() {
               </p>
               <div className="flex justify-center md:justify-start">
                 <img 
-                  className="h-12 w-auto opacity-80 mix-blend-multiply" 
-                  alt={`${siteConfig.businessName} signature`} 
+                  className="h-16 w-auto mix-blend-multiply opacity-90 dark:opacity-70 dark:invert mb-8" 
+                  alt={`${settings.brandName || siteConfig.businessName} signature`} 
                   src={brandingImages.signature}
                 />
               </div>
@@ -135,7 +138,6 @@ export default function Home() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-            {/* Service 1 */}
             <div className="bg-surface-container-lowest ambient-shadow rounded gold-border-top p-8 flex flex-col h-full fade-in-up group text-left">
               <div className="mb-6 overflow-hidden rounded aspect-[4/3]">
                 <img 
@@ -153,7 +155,6 @@ export default function Home() {
               </Link>
             </div>
             
-            {/* Service 2 */}
             <div className="bg-surface-container-lowest ambient-shadow rounded gold-border-top p-8 flex flex-col h-full fade-in-up group text-left" style={{ transitionDelay: '0.2s' }}>
               <div className="mb-6 overflow-hidden rounded aspect-[4/3]">
                 <img 
@@ -171,7 +172,6 @@ export default function Home() {
               </Link>
             </div>
             
-            {/* Service 3 */}
             <div className="bg-surface-container-lowest ambient-shadow rounded gold-border-top p-8 flex flex-col h-full fade-in-up group text-left" style={{ transitionDelay: '0.4s' }}>
               <div className="mb-6 overflow-hidden rounded aspect-[4/3]">
                 <img 
@@ -191,16 +191,17 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {siteConfig.social.instagram && (
+      {(settings.socialInstagram || siteConfig.social.instagram) && (
         <section className="py-section-gap bg-surface-container-low border-t border-secondary/10">
           <div className="max-w-container-max mx-auto px-margin-mobile md:px-gutter">
             <div className="flex flex-col md:flex-row justify-between items-end mb-12">
               <div>
                 <span className="font-label-caps text-label-caps text-secondary mb-2 tracking-widest uppercase block">Follow Along</span>
-                <h2 className="font-headline-md text-headline-md text-onyx">@abhilasha_joshi_artistry</h2>
+                <h2 className="font-headline-md text-headline-md text-onyx">
+                  {settings.socialInstagram || siteConfig.social.instagram}
+                </h2>
               </div>
-              <a href={siteConfig.social.instagram} target="_blank" rel="noopener noreferrer" className="mt-6 md:mt-0 font-label-caps text-label-caps text-secondary flex items-center hover:opacity-70 transition-opacity">
+              <a href={settings.socialInstagram || siteConfig.social.instagram} target="_blank" rel="noopener noreferrer" className="mt-6 md:mt-0 font-label-caps text-label-caps text-secondary flex items-center hover:opacity-70 transition-opacity">
                 Follow on Instagram <span className="material-symbols-outlined ml-2 text-sm">arrow_forward</span>
               </a>
             </div>
@@ -208,23 +209,14 @@ export default function Home() {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
               {instagramPosts.map((post, i) => (
                 post.url ? (
-                  <a 
-                    key={i} 
-                    href={post.url}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className={`block relative aspect-square overflow-hidden group ${i > 3 ? 'hidden lg:block' : ''}`}
-                  >
+                  <a key={i} href={post.url} target="_blank" rel="noopener noreferrer" className={`block relative aspect-square overflow-hidden group ${i > 3 ? 'hidden lg:block' : ''}`}>
                     <img src={post.image} alt="Instagram post" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <span className="text-white">♥</span>
                     </div>
                   </a>
                 ) : (
-                  <div 
-                    key={i} 
-                    className={`block relative aspect-square overflow-hidden group ${i > 3 ? 'hidden lg:block' : ''}`}
-                  >
+                  <div key={i} className={`block relative aspect-square overflow-hidden group ${i > 3 ? 'hidden lg:block' : ''}`}>
                     <img src={post.image} alt="Instagram post" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                   </div>
                 )

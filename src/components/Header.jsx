@@ -1,15 +1,21 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { siteConfig } from '../data/siteConfig';
+import { useSettings } from '../hooks/useSettings';
 
 export default function Header() {
+  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const settings = useSettings();
 
   return (
     <header className="fixed w-full z-50 bg-surface dark:bg-surface-dim shadow-sm border-b border-secondary/20 top-0 transition-transform duration-300" id="main-nav">
       <div className="flex justify-between items-center w-full px-margin-mobile md:px-gutter max-w-container-max mx-auto h-20">
-        <Link to="/" className="font-headline-md text-[20px] md:text-headline-md text-secondary tracking-widest uppercase scale-95 duration-200 hover:opacity-80 truncate mr-4">
-          {siteConfig.businessName}
+        <Link to="/" className="flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
+          <span className="font-headline-sm text-headline-sm text-primary uppercase tracking-widest hover:text-secondary transition-colors">
+            {settings.brandName || siteConfig.businessName}
+          </span>
         </Link>
 
         {/* Desktop Navigation */}

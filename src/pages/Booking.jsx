@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { siteConfig } from '../data/siteConfig';
+import { useSettings } from '../hooks/useSettings';
 import SEO from '../components/SEO';
 
 export default function Booking() {
+  const settings = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState({ success: false, message: '' });
 
@@ -54,7 +56,7 @@ export default function Booking() {
         <div>
           <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-background mb-6">Inquire &amp; Book</h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant mb-6 max-w-lg">
-            We are honored you are considering {siteConfig.businessName} for your special event. Please provide details regarding your inquiry, and we will respond within 48 hours to schedule a consultation.
+            We are honored you are considering {settings.brandName || siteConfig.businessName} for your special event. Please provide details regarding your inquiry, and we will respond within 48 hours to schedule a consultation.
           </p>
           
           <div className="mb-10">
@@ -86,8 +88,8 @@ export default function Booking() {
               <span className="material-symbols-outlined text-secondary mr-4 mt-1 md:mt-0" style={{ fontVariationSettings: "'FILL' 1" }}>mail</span>
               <div>
                 <h3 className="font-label-caps text-label-caps text-on-background uppercase tracking-widest mb-1">Email</h3>
-                <a href={`mailto:${siteConfig.booking.bookingEmail}`} className="font-body-md text-body-md text-on-surface-variant hover:text-secondary transition-colors flex items-center min-h-[44px] md:min-h-0 md:inline-block">
-                  {siteConfig.booking.bookingEmail}
+                <a href={`mailto:${settings.contactEmail || siteConfig.booking.bookingEmail}`} className="font-body-md text-body-md text-on-surface-variant hover:text-secondary transition-colors flex items-center min-h-[44px] md:min-h-0 md:inline-block">
+                  {settings.contactEmail || siteConfig.booking.bookingEmail}
                 </a>
               </div>
             </div>
@@ -120,7 +122,7 @@ export default function Booking() {
             )}
             
             <input type="hidden" name="access_key" value={import.meta.env.VITE_WEB3FORMS_KEY || ''} />
-            <input type="hidden" name="subject" value={`New Inquiry from ${siteConfig.businessName}`} />
+            <input type="hidden" name="subject" value={`New Inquiry from ${settings.brandName || siteConfig.businessName}`} />
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="relative">

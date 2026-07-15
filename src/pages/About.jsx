@@ -1,8 +1,10 @@
 import { aboutImages, brandingImages } from '../data/images';
 import { siteConfig } from '../data/siteConfig';
+import { useSettings } from '../hooks/useSettings';
 import SEO from '../components/SEO';
 
 export default function About() {
+  const settings = useSettings();
   return (
     <main className="flex-grow pt-20">
       <SEO title="About the Artist" url="/about" />
@@ -23,16 +25,24 @@ export default function About() {
           <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-background mb-8 leading-tight">
             Crafting Quiet <br/> Luxury.
           </h1>
-          <p className="font-body-lg text-body-lg text-on-surface-variant mb-6">
-            With over a decade of experience in high-fashion editorial and luxury bridal makeup, I believe in a philosophy of restraint. True beauty artistry isn't about masking features; it's about revealing them through refined techniques and premium formulations.
-          </p>
-          <p className="font-body-lg text-body-lg text-on-surface-variant mb-10">
-            My approach marries the precision of an atelier with the warmth of a personal consultation, ensuring every client leaves feeling like the most sophisticated version of themselves.
-          </p>
-          <div>
+          {settings.brandBio ? (
+            <div className="font-body-lg text-body-lg text-on-surface-variant mb-10 space-y-6 whitespace-pre-wrap">
+              {settings.brandBio}
+            </div>
+          ) : (
+            <>
+              <p className="font-body-lg text-body-lg text-on-surface-variant mb-6">
+                With over a decade of experience in high-fashion editorial and luxury bridal makeup, I believe in a philosophy of restraint. True beauty artistry isn't about masking features; it's about revealing them through refined techniques and premium formulations.
+              </p>
+              <p className="font-body-lg text-body-lg text-on-surface-variant mb-10">
+                My approach marries the precision of an atelier with the warmth of a personal consultation, ensuring every client leaves feeling like the most sophisticated version of themselves.
+              </p>
+            </>
+          )}
+          <div className="flex justify-center md:justify-start">
             <img 
-              className="h-12 opacity-80" 
-              alt={`${siteConfig.businessName} signature`} 
+              className="h-16 w-auto mix-blend-multiply opacity-90 dark:opacity-70 dark:invert mb-8" 
+              alt={`${settings.brandName || siteConfig.businessName} signature`} 
               src={brandingImages.signature}
             />
           </div>
