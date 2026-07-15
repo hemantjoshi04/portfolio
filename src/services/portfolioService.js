@@ -1,7 +1,9 @@
 const MOCK_DELAY = 500;
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-let mockPortfolio = [
+const STORAGE_KEY = 'luxe_beauty_portfolio_v1';
+
+const seedData = [
   { 
     id: '1', 
     title: 'Bridal Glamour', 
@@ -26,19 +28,43 @@ let mockPortfolio = [
   }
 ];
 
+const loadData = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch (e) {
+    console.error('Failed to parse from localStorage, resetting data', e);
+    localStorage.removeItem(STORAGE_KEY);
+  }
+  
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(seedData));
+  return [...seedData];
+};
+
+const saveData = (data) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+};
+
 export const portfolioService = {
+  reset: async () => {
+    localStorage.removeItem(STORAGE_KEY);
+    return { success: true, data: { success: true }, error: null };
+  },
+
   getAll: async () => {
     await delay(MOCK_DELAY);
+    const data = loadData();
     return {
       success: true,
-      data: [...mockPortfolio].sort((a, b) => a.sortOrder - b.sortOrder),
+      data: data.sort((a, b) => a.sortOrder - b.sortOrder),
       error: null
     };
   },
 
   getById: async (id) => {
     await delay(MOCK_DELAY);
-    const item = mockPortfolio.find(p => p.id === id);
+    const data = loadData();
+    const item = data.find(p => p.id === id);
     if (!item) {
       return {
         success: false,
@@ -55,16 +81,18 @@ export const portfolioService = {
 
   create: async (data) => {
     await delay(MOCK_DELAY);
+    const items = loadData();
     const newItem = { 
       id: Date.now().toString(), 
       createdAt: new Date().toISOString(), 
-      sortOrder: mockPortfolio.length,
+      sortOrder: items.length,
       visible: true,
       featured: false,
       altText: '',
       ...data 
     };
-    mockPortfolio.push(newItem);
+    items.push(newItem);
+    saveData(items);
     return {
       success: true,
       data: newItem,
@@ -72,9 +100,10 @@ export const portfolioService = {
     };
   },
 
-  update: async (id, data) => {
+  update: async (id, updates) => {
     await delay(MOCK_DELAY);
-    const index = mockPortfolio.findIndex(p => p.id === id);
+    const items = loadData();
+    const index = items.findIndex(p => p.id === id);
     if (index === -1) {
       return {
         success: false,
@@ -82,17 +111,19 @@ export const portfolioService = {
         error: 'Not found'
       };
     }
-    mockPortfolio[index] = { ...mockPortfolio[index], ...data };
+    items[index] = { ...items[index], ...updates };
+    saveData(items);
     return {
       success: true,
-      data: mockPortfolio[index],
+      data: items[index],
       error: null
     };
   },
 
   delete: async (id) => {
     await delay(MOCK_DELAY);
-    const index = mockPortfolio.findIndex(p => p.id === id);
+    const items = loadData();
+    const index = items.findIndex(p => p.id === id);
     if (index === -1) {
       return {
         success: false,
@@ -100,7 +131,8 @@ export const portfolioService = {
         error: 'Not found'
       };
     }
-    mockPortfolio.splice(index, 1);
+    items.splice(index, 1);
+    saveData(items);
     return {
       success: true,
       data: { success: true },
@@ -124,18 +156,20 @@ export const portfolioService = {
     };
   },
 
-  reorder: async (items) => {
+  reorder: async (updatedItems) => {
     await delay(MOCK_DELAY);
-    // Expects items to be an array of objects: { id: string, sortOrder: number }
-    items.forEach(({ id, sortOrder }) => {
-      const index = mockPortfolio.findIndex(p => p.id === id);
+    const items = loadData();
+    // Expects updatedItems to be an array of objects: { id: string, sortOrder: number }
+    updatedItems.forEach(({ id, sortOrder }) => {
+      const index = items.findIndex(p => p.id === id);
       if (index !== -1) {
-        mockPortfolio[index].sortOrder = sortOrder;
+        items[index].sortOrder = sortOrder;
       }
     });
     
-    // Sort array in memory
-    mockPortfolio.sort((a, b) => a.sortOrder - b.sortOrder);
+    // Sort array in memory before saving
+    items.sort((a, b) => a.sortOrder - b.sortOrder);
+    saveData(items);
 
     return {
       success: true,
@@ -146,7 +180,8 @@ export const portfolioService = {
 
   toggleVisibility: async (id) => {
     await delay(MOCK_DELAY);
-    const index = mockPortfolio.findIndex(p => p.id === id);
+    const items = loadData();
+    const index = items.findIndex(p => p.id === id);
     if (index === -1) {
       return {
         success: false,
@@ -154,17 +189,19 @@ export const portfolioService = {
         error: 'Not found'
       };
     }
-    mockPortfolio[index].visible = !mockPortfolio[index].visible;
+    items[index].visible = !items[index].visible;
+    saveData(items);
     return {
       success: true,
-      data: mockPortfolio[index],
+      data: items[index],
       error: null
     };
   },
 
   toggleFeatured: async (id) => {
     await delay(MOCK_DELAY);
-    const index = mockPortfolio.findIndex(p => p.id === id);
+    const items = loadData();
+    const index = items.findIndex(p => p.id === id);
     if (index === -1) {
       return {
         success: false,
@@ -172,10 +209,11 @@ export const portfolioService = {
         error: 'Not found'
       };
     }
-    mockPortfolio[index].featured = !mockPortfolio[index].featured;
+    items[index].featured = !items[index].featured;
+    saveData(items);
     return {
       success: true,
-      data: mockPortfolio[index],
+      data: items[index],
       error: null
     };
   }

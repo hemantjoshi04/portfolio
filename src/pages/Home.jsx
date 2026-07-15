@@ -1,14 +1,34 @@
 import { Link } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { homeImages, brandingImages } from '../data/images';
 import { siteConfig } from '../data/siteConfig';
-import { testimonialsData } from '../data/testimonials';
+import { testimonialService } from '../services/testimonialService';
 import { instagramPosts } from '../data/instagram';
 import { useSettings } from '../hooks/useSettings';
 import SEO from '../components/SEO';
 
 export default function Home() {
   const settings = useSettings();
+  const [testimonials, setTestimonials] = useState([]);
+  const [testimonialsError, setTestimonialsError] = useState(false);
+
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const res = await testimonialService.getAll();
+        if (res.success) {
+          const featured = res.data.filter(t => t.isFeatured);
+          const sorted = featured.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          setTestimonials(sorted);
+        } else {
+          setTestimonialsError(true);
+        }
+      } catch (err) {
+        setTestimonialsError(true);
+      }
+    };
+    fetchTestimonials();
+  }, []);
 
   useEffect(() => {
     const observerOptions = {
@@ -31,7 +51,7 @@ export default function Home() {
     });
     
     return () => observer.disconnect();
-  }, []);
+  }, [testimonials]);
 
   return (
     <main className="pt-20">
@@ -111,22 +131,32 @@ export default function Home() {
             <h2 className="font-headline-md text-headline-md text-onyx">Kind Words</h2>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-            {testimonialsData.map((testimonial, i) => (
-              <div key={testimonial.id} className="bg-surface p-8 ambient-shadow rounded-sm border-t-2 border-secondary/30 fade-in-up" style={{ transitionDelay: `${i * 0.2}s` }}>
-                <div className="flex text-secondary mb-4">
-                  {[...Array(testimonial.rating)].map((_, index) => (
-                    <span key={index} className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                  ))}
+          {testimonialsError ? (
+            <div className="text-center py-8 fade-in-up">
+              <p className="font-body-md text-on-surface-variant">Unable to load testimonials at this time.</p>
+            </div>
+          ) : testimonials.length === 0 ? (
+            <div className="text-center py-8 fade-in-up">
+              <p className="font-body-md text-on-surface-variant">No featured client reviews available yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+              {testimonials.slice(0, 3).map((testimonial, i) => (
+                <div key={testimonial.id} className="bg-surface p-8 ambient-shadow rounded-sm border-t-2 border-secondary/30 fade-in-up" style={{ transitionDelay: `${i * 0.2}s` }}>
+                  <div className="flex text-secondary mb-4">
+                    {[...Array(testimonial.rating)].map((_, index) => (
+                      <span key={index} className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                    ))}
+                  </div>
+                  <p className="font-body-md text-body-md text-on-surface-variant italic mb-6">&ldquo;{testimonial.text}&rdquo;</p>
+                  <div>
+                    <h4 className="font-headline-sm text-headline-sm text-onyx text-sm">{testimonial.clientName}</h4>
+                    <span className="font-label-caps text-label-caps text-secondary/70 text-xs tracking-widest uppercase">{testimonial.service}</span>
+                  </div>
                 </div>
-                <p className="font-body-md text-body-md text-on-surface-variant italic mb-6">&ldquo;{testimonial.text}&rdquo;</p>
-                <div>
-                  <h4 className="font-headline-sm text-headline-sm text-onyx text-sm">{testimonial.clientName}</h4>
-                  <span className="font-label-caps text-label-caps text-secondary/70 text-xs tracking-widest uppercase">{testimonial.service}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
