@@ -16,21 +16,17 @@ export default function BlogPost() {
       setLoading(true);
       setError(null);
       try {
-        const res = await blogService.getAll();
-        if (res.success) {
-          const published = res.data.filter(p => p.status === 'published');
-          const found = published.find(p => p.slug === slug);
-          if (found) {
-            setPost(found);
-            const related = published
-              .filter(p => p.id !== found.id && p.category === found.category)
-              .slice(0, 3);
-            setRelatedPosts(related);
-          } else {
-            setError('Article not found');
+        const res = await blogService.getBySlug(slug);
+        if (res.success && res.data && res.data.status === 'published') {
+          const found = res.data;
+          setPost(found);
+          
+          const relatedRes = await blogService.getRelatedByCategory(found.category, found.id, 3);
+          if (relatedRes.success) {
+            setRelatedPosts(relatedRes.data);
           }
         } else {
-          setError('Failed to load article.');
+          setError('Article not found');
         }
       } catch (err) {
         setError('An unexpected error occurred.');

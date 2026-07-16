@@ -191,7 +191,6 @@ const PortfolioManager = () => {
       {/* Shared styles */}
       <style>{`
         .masonry-grid {
-            display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             grid-auto-rows: 10px;
             gap: 24px;

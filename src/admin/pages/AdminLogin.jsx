@@ -13,12 +13,17 @@ const AdminLogin = () => {
     setMounted(true);
   }, []);
 
-  const handleSubmit = (e) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = login(email, password);
-    if (!success) {
-      setError('Invalid credentials. Use admin@abhilasha.com / password123');
+    setError('');
+    setIsSubmitting(true);
+    const res = await login(email, password);
+    if (!res.success) {
+      setError(res.error || 'Invalid credentials.');
     }
+    setIsSubmitting(false);
   };
 
   return (
@@ -98,11 +103,12 @@ const AdminLogin = () => {
           </div>
 
           <button 
-            className="bg-on-background text-white transition-all duration-300 hover:bg-secondary hover:shadow-[inset_0_0_0_2px_#735c00] w-full py-4 font-label-caps text-label-caps uppercase tracking-[0.3em] mt-4 flex items-center justify-center gap-3 group" 
+            className="bg-on-background text-white transition-all duration-300 hover:bg-secondary hover:shadow-[inset_0_0_0_2px_#735c00] w-full py-4 font-label-caps text-label-caps uppercase tracking-[0.3em] mt-4 flex items-center justify-center gap-3 group disabled:opacity-50 disabled:cursor-not-allowed" 
             type="submit"
+            disabled={isSubmitting}
           >
-            Login
-            <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform" style={{ fontVariationSettings: "'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24" }}>arrow_forward</span>
+            {isSubmitting ? 'Authenticating...' : 'Login'}
+            {!isSubmitting && <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform" style={{ fontVariationSettings: "'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24" }}>arrow_forward</span>}
           </button>
         </form>
 

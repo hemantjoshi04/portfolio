@@ -1,54 +1,36 @@
-const MOCK_DELAY = 500;
-
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+import { supabase } from '../lib/supabase';
 
 export const authService = {
   login: async (email, password) => {
-    await delay(MOCK_DELAY);
-    if (email === 'admin@abhilasha.com' && password === 'password123') {
-      return {
-        success: true,
-        data: {
-          user: {
-            id: 'user_123',
-            email: 'admin@abhilasha.com',
-            name: 'Abhilasha',
-            role: 'admin'
-          },
-          token: 'mock_jwt_token_123'
-        },
-        error: null
-      };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (error) throw error;
+      return { success: true, data, error: null };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
     }
-    return {
-      success: false,
-      data: null,
-      error: 'Invalid credentials'
-    };
   },
 
   logout: async () => {
-    await delay(MOCK_DELAY);
-    return {
-      success: true,
-      data: { success: true },
-      error: null
-    };
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      return { success: true, data: { success: true }, error: null };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
+    }
   },
 
   getSession: async () => {
-    await delay(MOCK_DELAY);
-    return {
-      success: true,
-      data: {
-        user: {
-          id: 'user_123',
-          email: 'admin@abhilasha.com',
-          name: 'Abhilasha',
-          role: 'admin'
-        }
-      },
-      error: null
-    };
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      return { success: true, data: { session }, error: null };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
+    }
   }
 };

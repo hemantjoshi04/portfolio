@@ -1,5 +1,4 @@
-const MOCK_DELAY = 500;
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+import { supabase } from '../lib/supabase';
 
 const calculateReadingTime = (content) => {
   if (!content) return 1;
@@ -15,28 +14,50 @@ const generateSlug = (title) => {
 
 const STORAGE_KEY = 'luxe_beauty_blogs_v1';
 
-const seedData = [
-  { id: '1', title: 'The Art of Bridal Contouring: 2024 Trends', slug: 'art-of-bridal-contouring-2024', excerpt: 'Exploring the shift from heavy baking to luminous, skin-focused bridal sculpting.', content: '<p>Exploring the shift from heavy baking to luminous, skin-focused bridal sculpting.</p>', author: 'Abhilasha Singh', status: 'published', category: 'Bridal', tags: ['Bridal', 'Trends', 'Contouring'], readingTime: 12, views: 1200, comments: 42, publishedAt: '2023-10-24T12:00:00Z', createdAt: '2023-10-20T09:00:00Z', updatedAt: '2023-10-24T12:00:00Z', coverImageUrl: null },
-  { id: '2', title: 'Seasonal Skincare for Professional MUA\'s', slug: 'seasonal-skincare-mua', excerpt: 'A guide to seasonal skincare.', content: '<p>A guide to seasonal skincare.</p>', author: 'Abhilasha', status: 'draft', category: 'Editorial', tags: ['Skincare', 'Professional'], readingTime: 5, views: 0, comments: 0, publishedAt: null, createdAt: '2023-10-26T10:00:00Z', updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), coverImageUrl: null },
-  { id: '3', title: 'Summer Glow Skin Preparation', slug: 'summer-glow-skin-prep', excerpt: 'Summer glow essentials.', content: '<p>Summer glow essentials.</p>', author: 'Abhilasha', status: 'scheduled', category: 'Tutorial', tags: ['Summer', 'Glow'], readingTime: 4, views: 0, comments: 0, publishedAt: '2024-07-12T09:00:00Z', createdAt: '2023-10-27T10:00:00Z', updatedAt: '2023-10-27T10:00:00Z', coverImageUrl: null }
-];
-
-const loadData = () => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch (e) {
-    console.error('Failed to parse from localStorage, resetting data', e);
-    localStorage.removeItem(STORAGE_KEY);
-  }
-  
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(seedData));
-  return [...seedData];
+// --- SUPABASE MAPPERS ---
+const mapToCamelCase = (row) => {
+  if (!row) return null;
+  return {
+    id: row.id,
+    title: row.title,
+    slug: row.slug,
+    excerpt: row.excerpt,
+    content: row.content,
+    author: row.author,
+    status: row.status,
+    category: row.category,
+    tags: row.tags || [],
+    readingTime: row.reading_time,
+    views: row.views,
+    comments: row.comments,
+    publishedAt: row.published_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    coverImageUrl: row.cover_image_url
+  };
 };
 
-const saveData = (data) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+const mapToSnakeCase = (post) => {
+  const result = {};
+  if (post.id !== undefined) result.id = post.id;
+  if (post.title !== undefined) result.title = post.title;
+  if (post.slug !== undefined) result.slug = post.slug;
+  if (post.excerpt !== undefined) result.excerpt = post.excerpt;
+  if (post.content !== undefined) result.content = post.content;
+  if (post.author !== undefined) result.author = post.author;
+  if (post.status !== undefined) result.status = post.status;
+  if (post.category !== undefined) result.category = post.category;
+  if (post.tags !== undefined) result.tags = post.tags;
+  if (post.readingTime !== undefined) result.reading_time = post.readingTime;
+  if (post.views !== undefined) result.views = post.views;
+  if (post.comments !== undefined) result.comments = post.comments;
+  if (post.publishedAt !== undefined) result.published_at = post.publishedAt;
+  if (post.createdAt !== undefined) result.created_at = post.createdAt;
+  if (post.updatedAt !== undefined) result.updated_at = post.updatedAt;
+  if (post.coverImageUrl !== undefined) result.cover_image_url = post.coverImageUrl;
+  return result;
 };
+
 
 export const blogService = {
   reset: async () => {
@@ -45,93 +66,145 @@ export const blogService = {
   },
 
   getAll: async () => {
-    await delay(MOCK_DELAY);
-    const data = loadData();
-    return {
-      success: true,
-      data,
-      error: null
-    };
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data.map(mapToCamelCase), error: null };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
+    }
   },
 
   getById: async (id) => {
-    await delay(MOCK_DELAY);
-    const items = loadData();
-    const item = items.find(b => b.id === id);
-    if (!item) {
-      return {
-        success: false,
-        data: null,
-        error: 'Not found'
-      };
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return { success: true, data: mapToCamelCase(data), error: null };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
     }
-    return {
-      success: true,
-      data: { ...item },
-      error: null
-    };
+  },
+
+  getBySlug: async (slug) => {
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+
+      if (error) throw error;
+      return { success: true, data: mapToCamelCase(data), error: null };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
+    }
+  },
+
+  getRelatedByCategory: async (category, excludeId, limit = 3) => {
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('status', 'published')
+        .eq('category', category)
+        .neq('id', excludeId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return { success: true, data: data.map(mapToCamelCase), error: null };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
+    }
   },
 
   create: async (data) => {
-    await delay(MOCK_DELAY);
-    const items = loadData();
-    const now = new Date().toISOString();
-    const readingTime = calculateReadingTime(data.content || '');
-    const slug = generateSlug(data.title || 'untitled');
-    
-    const newItem = { 
-      id: Date.now().toString(),
-      author: 'Abhilasha Singh',
-      status: 'draft',
-      category: 'Uncategorized',
-      tags: [],
-      views: 0,
-      comments: 0,
-      publishedAt: null,
-      coverImageUrl: null,
-      ...data,
-      slug,
-      readingTime,
-      createdAt: now,
-      updatedAt: now
-    };
-    items.push(newItem);
-    saveData(items);
-    return {
-      success: true,
-      data: newItem,
-      error: null
-    };
+    try {
+      const now = new Date().toISOString();
+      const readingTime = calculateReadingTime(data.content || '');
+      
+      let baseSlug = generateSlug(data.title || 'untitled');
+      let finalSlug = baseSlug;
+      let counter = 1;
+
+      // Ensure slug uniqueness
+      while (true) {
+        const { count } = await supabase
+          .from('blog_posts')
+          .select('slug', { count: 'exact', head: true })
+          .eq('slug', finalSlug);
+          
+        if (count === 0) break;
+        finalSlug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+
+      const newItem = { 
+        id: Date.now().toString(),
+        author: 'Abhilasha Singh',
+        status: 'draft',
+        category: 'Uncategorized',
+        tags: [],
+        views: 0,
+        comments: 0,
+        publishedAt: null,
+        coverImageUrl: null,
+        ...data,
+        slug: finalSlug,
+        readingTime,
+        createdAt: now,
+        updatedAt: now
+      };
+
+      const snakeCaseData = mapToSnakeCase(newItem);
+
+      const { data: insertedData, error } = await supabase
+        .from('blog_posts')
+        .insert([snakeCaseData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data: mapToCamelCase(insertedData), error: null };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
+    }
   },
 
   update: async (id, data) => {
-    await delay(MOCK_DELAY);
-    const items = loadData();
-    const index = items.findIndex(b => b.id === id);
-    if (index === -1) {
-      return {
-        success: false,
-        data: null,
-        error: 'Not found'
-      };
+    try {
+      const updatedData = { ...data };
+      if (updatedData.content !== undefined) {
+        updatedData.readingTime = calculateReadingTime(updatedData.content);
+      }
+      if (updatedData.title !== undefined) {
+        updatedData.slug = generateSlug(updatedData.title);
+      }
+      updatedData.updatedAt = new Date().toISOString();
+
+      const snakeCaseData = mapToSnakeCase(updatedData);
+
+      const { data: resultData, error } = await supabase
+        .from('blog_posts')
+        .update(snakeCaseData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data: mapToCamelCase(resultData), error: null };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
     }
-    
-    const updatedData = { ...data };
-    if (updatedData.content !== undefined) {
-      updatedData.readingTime = calculateReadingTime(updatedData.content);
-    }
-    if (updatedData.title !== undefined) {
-      updatedData.slug = generateSlug(updatedData.title);
-    }
-    updatedData.updatedAt = new Date().toISOString();
-    
-    items[index] = { ...items[index], ...updatedData };
-    saveData(items);
-    return {
-      success: true,
-      data: items[index],
-      error: null
-    };
   },
 
   publish: async (id) => {
@@ -149,34 +222,44 @@ export const blogService = {
   },
 
   uploadImage: async (file) => {
-    await delay(MOCK_DELAY);
-    // Mock local placeholder
-    return {
-      success: true,
-      data: {
-        url: '/images/placeholders/blog-placeholder.jpg'
-      },
-      error: null
-    };
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('blog-assets')
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('blog-assets')
+        .getPublicUrl(filePath);
+
+      return {
+        success: true,
+        data: { url: data.publicUrl },
+        error: null
+      };
+    } catch (error) {
+      console.error('Error uploading blog image:', error);
+      return { success: false, data: null, error: error.message };
+    }
   },
 
   delete: async (id) => {
-    await delay(MOCK_DELAY);
-    const items = loadData();
-    const index = items.findIndex(b => b.id === id);
-    if (index === -1) {
-      return {
-        success: false,
-        data: null,
-        error: 'Not found'
-      };
+    try {
+      const { error } = await supabase
+        .from('blog_posts')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return { success: true, data: { success: true }, error: null };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
     }
-    items.splice(index, 1);
-    saveData(items);
-    return {
-      success: true,
-      data: { success: true },
-      error: null
-    };
   }
 };
+

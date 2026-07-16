@@ -1,13 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { portfolioImages } from '../data/images';
-import { portfolioData } from '../data/portfolio';
+import { portfolioService } from '../services/portfolioService';
 import SEO from '../components/SEO';
 
 export default function Portfolio() {
   const [filter, setFilter] = useState('All');
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [portfolioData, setPortfolioData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const categories = ['All', 'Bridal', 'Editorial', 'Fashion', 'Glamour'];
+
+  useEffect(() => {
+    const fetchPortfolio = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await portfolioService.getAll();
+        if (res.success) {
+          setPortfolioData(res.data.filter(item => item.visible));
+        } else {
+          setError('Unable to load portfolio images at this time.');
+        }
+      } catch (err) {
+        setError('Unable to load portfolio images at this time.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPortfolio();
+  }, []);
   
   const filteredData = filter === 'All' 
     ? portfolioData 
@@ -49,28 +72,40 @@ export default function Portfolio() {
       </section>
 
       <section className="px-margin-mobile md:px-gutter max-w-container-max mx-auto pb-section-gap">
-        <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-          {filteredData.map((item, index) => (
-            <div 
-              key={item.id} 
-              onClick={() => openLightbox(index)}
-              className="relative group overflow-hidden bg-surface-container-low cursor-pointer break-inside-avoid"
-            >
-              <img className="w-full h-auto object-cover border border-transparent group-hover:border-secondary/20 transition-all duration-300 transform group-hover:scale-105" alt={item.alt} src={item.src} />
-              <div className="absolute inset-0 bg-on-background/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                <span className="material-symbols-outlined text-on-primary text-4xl font-light">zoom_in</span>
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-on-background/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <span className="bg-surface-container-high text-on-surface px-3 py-1 font-label-caps text-[10px] uppercase tracking-widest">{item.category}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        {filteredData.length === 0 && (
+        {isLoading ? (
           <div className="text-center py-12">
-            <p className="font-body-lg text-on-surface-variant">No images found for this category.</p>
+            <p className="font-body-lg text-on-surface-variant">Loading portfolio gallery...</p>
           </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="font-body-lg text-on-surface-variant text-red-500">{error}</p>
+          </div>
+        ) : (
+          <>
+            <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+              {filteredData.map((item, index) => (
+                <div 
+                  key={item.id} 
+                  onClick={() => openLightbox(index)}
+                  className="relative group overflow-hidden bg-surface-container-low cursor-pointer break-inside-avoid"
+                >
+                  <img className="w-full h-auto object-cover border border-transparent group-hover:border-secondary/20 transition-all duration-300 transform group-hover:scale-105" alt={item.altText} src={item.imageUrl} />
+                  <div className="absolute inset-0 bg-on-background/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-on-primary text-4xl font-light">zoom_in</span>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-on-background/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span className="bg-surface-container-high text-on-surface px-3 py-1 font-label-caps text-[10px] uppercase tracking-widest">{item.category}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {filteredData.length === 0 && (
+              <div className="text-center py-12">
+                <p className="font-body-lg text-on-surface-variant">No images found for this category.</p>
+              </div>
+            )}
+          </>
         )}
       </section>
 
@@ -121,8 +156,8 @@ export default function Portfolio() {
           
           <div className="max-w-[90vw] max-h-[85vh] relative" onClick={(e) => e.stopPropagation()}>
             <img 
-              src={filteredData[lightboxIndex].src} 
-              alt={filteredData[lightboxIndex].alt} 
+              src={filteredData[lightboxIndex].imageUrl} 
+              alt={filteredData[lightboxIndex].altText} 
               className="max-w-full max-h-[85vh] object-contain shadow-2xl"
             />
             <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">

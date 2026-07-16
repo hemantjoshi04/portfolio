@@ -12,6 +12,7 @@ import BlogPost from './pages/BlogPost';
 import Booking from './pages/Booking';
 
 import { siteConfig } from './data/siteConfig';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Admin Imports
 import { AuthProvider } from './admin/auth/AuthContext';
@@ -25,7 +26,6 @@ import BookingRequests from './admin/pages/BookingRequests';
 import SiteSettings from './admin/pages/SiteSettings';
 import TestimonialManager from './admin/pages/TestimonialManager';
 import BlogManager from './admin/pages/BlogManager';
-
 const PublicLayout = () => (
   <div className="min-h-screen flex flex-col">
     <Header />
@@ -41,7 +41,8 @@ function App() {
   }, []);
   
   return (
-    <Router>
+    <ErrorBoundary>
+      <Router>
       <AuthProvider>
         <Routes>
           {/* Public Website */}
@@ -72,6 +73,7 @@ function App() {
         </Routes>
       </AuthProvider>
     </Router>
+    </ErrorBoundary>
   );
 }
 

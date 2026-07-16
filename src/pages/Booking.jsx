@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { siteConfig } from '../data/siteConfig';
 import { useSettings } from '../hooks/useSettings';
 import SEO from '../components/SEO';
+import { bookingService } from '../services/bookingService';
 
 export default function Booking() {
   const settings = useSettings();
@@ -10,43 +11,71 @@ export default function Booking() {
 
   const onSubmit = async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
+
     setIsSubmitting(true);
     setResult({ success: false, message: '' });
     
-    const accessKey = import.meta.env.VITE_WEB3FORMS_KEY;
-
-    if (!accessKey) {
-      setResult({ success: false, message: 'Form submission is disabled. Please configure your Web3Forms access key in your .env file.' });
-      setIsSubmitting(false);
-      return;
-    }
-
-    const formData = new FormData(event.target);
-    const object = Object.fromEntries(formData.entries());
-    const json = JSON.stringify(object);
-
     try {
-      const res = await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json"
-        },
-        body: json
-      });
-      const data = await res.json();
+      const accessKey = import.meta.env.VITE_WEB3FORMS_KEY;
 
-      if (res.status === 200) {
-        setResult({ success: true, message: "Thank you! Your inquiry has been sent successfully. We will be in touch soon." });
-        event.target.reset();
-      } else {
-        setResult({ success: false, message: data.message || "Something went wrong. Please try again later." });
+      const formData = new FormData(event.target);
+      const object = Object.fromEntries(formData.entries());
+      
+      // 1. Build booking payload
+      const bookingPayload = {
+        clientName: `${object['First Name'] || ''} ${object['Last Name'] || ''}`.trim(),
+        clientEmail: object['Email'] || '',
+        clientPhone: object['Phone'] || null,
+        clientAvatar: '',
+        type: object['Service Type'] || 'Other Inquiry',
+        date: object['Event Date'] ? new Date(object['Event Date'] + 'T12:00:00Z').toISOString() : null,
+        notes: `Location: ${object['Event Location'] || 'N/A'}\n\n${object['Message'] || ''}`
+      };
+
+      // 2. Create in Supabase FIRST
+      const dbResult = await bookingService.create(bookingPayload);
+      
+      // 3. If Supabase fails, abort submission completely
+      if (!dbResult.success) {
+        setResult({ success: false, message: 'Failed to register inquiry. Please try again or use WhatsApp.' });
+        return;
       }
-    } catch (error) {
-      setResult({ success: false, message: "Network error. Please try again later." });
+
+      // 4. If Supabase succeeds, attempt to send Web3Forms email
+      if (accessKey) {
+        const json = JSON.stringify(object);
+        try {
+          const res = await fetch("https://api.web3forms.com/submit", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json"
+            },
+            body: json
+          });
+          const data = await res.json();
+          
+          if (res.status !== 200) {
+            // Log error but don't abort, booking is already in DB
+            console.error('Web3Forms email notification failed:', data.message);
+          }
+        } catch (error) {
+          console.error('Web3Forms network error:', error);
+        }
+      } else {
+        console.warn('Web3Forms access key missing, email notification skipped.');
+      }
+      
+      // 5. Show success message (since DB insert succeeded)
+      setResult({ success: true, message: "Thank you! Your inquiry has been sent successfully. We will be in touch soon." });
+      event.target.reset();
+    } catch (unexpectedError) {
+      console.error('Unexpected form submission error:', unexpectedError);
+      setResult({ success: false, message: 'An unexpected error occurred. Please try again or use WhatsApp.' });
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    setIsSubmitting(false);
   };
   return (
     <main className="flex-grow pt-20">

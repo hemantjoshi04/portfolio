@@ -26,7 +26,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: 'Blog', path: '/admin/blog', icon: 'edit_note' },
     { name: 'Clients', path: '/admin/testimonials', icon: 'group' },
     { name: 'Bookings', path: '/admin/bookings', icon: 'calendar_month' },
-    { name: 'Settings', path: '/admin/settings', icon: 'settings' },
+    { name: 'Site Settings', path: '/admin/settings', icon: 'settings' }
   ];
 
   const bottomNavItems = [];

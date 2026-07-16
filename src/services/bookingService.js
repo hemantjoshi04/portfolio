@@ -1,32 +1,39 @@
-const MOCK_DELAY = 500;
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+import { supabase } from '../lib/supabase';
 
 const STORAGE_KEY = 'luxe_beauty_bookings_v1';
 
-const seedData = [
-  { id: '1', clientName: 'Elena Salvatore', clientEmail: 'elena.s@example.com', clientPhone: '+1 (555) 012-3456', clientAvatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD-QrplE9STovfdYC2u6Ffex5SdUZfo-kTCHqNu7sCAKe3tHEFUetEiDw1EPQ9pODYgJx3Ivh1ciKtW4i79X0ubw9ijZROcbTJnBFQOgRDC70eZ3-UzqsDk5ZpFPe02JdT5MWOvMQ4EjEKiDTws54xXCwQ8GEHDnTbIzkrlOB3ByxVNyWIE5vPKQONRH8QswhfPgLTSxB4XuIJxwLyAho25dJb8XF2JLis9q477lvyScFVqsDHv8sJ_2HnwtU9xTZL0Ya5jeqix7w7w', type: 'Bridal Editorial', date: '2023-10-24T10:00:00Z', status: 'pending', notes: 'Looking for a timeless, glowing bridal look for a winter wedding. Interested in airbrush finish.', createdAt: '2023-10-20T11:00:00Z' },
-  { id: '2', clientName: 'Marcus Wright', clientEmail: 'm.wright@studio.com', clientPhone: '+1 (555) 987-6543', clientAvatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAqIhHnHlvW3piELignZzZnozTX8b7JmDf11X1N2iLmtBSH7_fYh2t2d6qsLRpRp8NIno6zmaATsGsZOR8TN5ktR5hVculTdTO5d6WL_-o2xjHy6NtTjJqbPUfNqfRFF11X6iQhq39apFsDZgJ8qPi9KgmYgS_QD0lnhYh1d_v9_rtYnBIzix-w3Bb3DJob0xifK04VYEoCWqiJS0mJ25ajVrXT1Qg2uk0rOpJuA5UXe1OPvJpteNltAPQ6kz1Ijq-EP_NTlb3E7J-4', type: 'High-Fashion Look', date: '2023-10-26T14:30:00Z', status: 'confirmed', notes: 'Studio shoot.', createdAt: '2023-10-21T09:30:00Z' },
-  { id: '3', clientName: 'Lydia Bennet', clientEmail: 'lydia.b@couture.fr', clientPhone: '+33 6 12 34 56 78', clientAvatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCxeEzGolyyteGv7D2bs_luBc9qll4qvJVs0xgZgnoNOMJQmtb7e10N9H2_-uPryR6U_dcxk3n8B1SMhGa5qBRGJIKx6Y0udLM-FxJHt375oJvcmFngRLXv-8QngvPQZ2UzAPzKBjN6TZBOlhDHsrf6io24-SHYgr6SgW1dddF-0uiOVMiFm79WvfrPkkUfnVdl3nUIj93ZbJTBKPQblytPu_V5Q82IpqPBAVKRzsJqkpWhmzmkqPD3ZsBPUgcfnkvrjt9oEZ8MioEz', type: 'Red Carpet Gala', date: '2023-11-02T18:00:00Z', status: 'pending', notes: 'Gala event.', createdAt: '2023-10-22T10:00:00Z' },
-  { id: '4', clientName: 'Sophia Jensen', clientEmail: 'sjensen@vogue.co.uk', clientPhone: '+44 20 7946 0958', clientAvatar: '', type: 'Vogue Feature', date: '2023-10-15T09:00:00Z', status: 'cancelled', notes: 'Rescheduled for next month.', createdAt: '2023-10-10T09:00:00Z' },
-  { id: '5', clientName: 'Amara Khan', clientEmail: 'amara.khan@global.com', clientPhone: '+91 98765 43210', clientAvatar: '', type: 'Cultural Event', date: '2023-11-12T16:00:00Z', status: 'pending', notes: 'Need traditional touch.', createdAt: '2023-10-23T11:00:00Z' }
-];
-
-const loadData = () => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch (e) {
-    console.error('Failed to parse from localStorage, resetting data', e);
-    localStorage.removeItem(STORAGE_KEY);
-  }
-  
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(seedData));
-  return [...seedData];
+// --- SUPABASE MAPPERS ---
+const mapToCamelCase = (row) => {
+  if (!row) return null;
+  return {
+    id: row.id,
+    clientName: row.client_name,
+    clientEmail: row.client_email,
+    clientPhone: row.client_phone,
+    clientAvatar: row.client_avatar,
+    type: row.service_type,
+    date: row.event_date,
+    status: row.status,
+    notes: row.notes,
+    createdAt: row.created_at
+  };
 };
 
-const saveData = (data) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+const mapToSnakeCase = (booking) => {
+  const result = {};
+  if (booking.id !== undefined) result.id = booking.id;
+  if (booking.clientName !== undefined) result.client_name = booking.clientName;
+  if (booking.clientEmail !== undefined) result.client_email = booking.clientEmail;
+  if (booking.clientPhone !== undefined) result.client_phone = booking.clientPhone;
+  if (booking.clientAvatar !== undefined) result.client_avatar = booking.clientAvatar;
+  if (booking.type !== undefined) result.service_type = booking.type;
+  if (booking.date !== undefined) result.event_date = booking.date;
+  if (booking.status !== undefined) result.status = booking.status;
+  if (booking.notes !== undefined) result.notes = booking.notes;
+  if (booking.createdAt !== undefined) result.created_at = booking.createdAt;
+  return result;
 };
+
 
 export const bookingService = {
   reset: async () => {
@@ -35,87 +42,112 @@ export const bookingService = {
   },
 
   getAll: async () => {
-    await delay(MOCK_DELAY);
-    const data = loadData();
-    return {
-      success: true,
-      data,
-      error: null
-    };
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return {
+        success: true,
+        data: data.map(mapToCamelCase),
+        error: null
+      };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
+    }
   },
 
   getById: async (id) => {
-    await delay(MOCK_DELAY);
-    const items = loadData();
-    const item = items.find(b => b.id === id);
-    if (!item) {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
       return {
-        success: false,
-        data: null,
-        error: 'Not found'
+        success: true,
+        data: mapToCamelCase(data),
+        error: null
       };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
     }
-    return {
-      success: true,
-      data: { ...item },
-      error: null
-    };
   },
 
   create: async (data) => {
-    await delay(MOCK_DELAY);
-    const items = loadData();
-    const newItem = { id: Date.now().toString(), status: 'pending', ...data };
-    items.push(newItem);
-    saveData(items);
-    return {
-      success: true,
-      data: newItem,
-      error: null
-    };
+    try {
+      const newItem = {
+        ...data,
+        id: Date.now().toString(),
+        status: data.status || 'pending',
+        createdAt: new Date().toISOString()
+      };
+      
+      const snakeCaseData = mapToSnakeCase(newItem);
+
+      const { data: insertedData, error } = await supabase
+        .from('bookings')
+        .insert([snakeCaseData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return {
+        success: true,
+        data: mapToCamelCase(insertedData),
+        error: null
+      };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
+    }
   },
 
   update: async (id, data) => {
-    await delay(MOCK_DELAY);
-    const items = loadData();
-    const index = items.findIndex(b => b.id === id);
-    if (index === -1) {
+    try {
+      const snakeCaseData = mapToSnakeCase(data);
+      
+      const { data: updatedData, error } = await supabase
+        .from('bookings')
+        .update(snakeCaseData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
       return {
-        success: false,
-        data: null,
-        error: 'Not found'
+        success: true,
+        data: mapToCamelCase(updatedData),
+        error: null
       };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
     }
-    items[index] = { ...items[index], ...data };
-    saveData(items);
-    return {
-      success: true,
-      data: items[index],
-      error: null
-    };
   },
   
   updateStatus: async (id, status) => {
-      return bookingService.update(id, { status });
+    return bookingService.update(id, { status });
   },
 
   delete: async (id) => {
-    await delay(MOCK_DELAY);
-    const items = loadData();
-    const index = items.findIndex(b => b.id === id);
-    if (index === -1) {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
       return {
-        success: false,
-        data: null,
-        error: 'Not found'
+        success: true,
+        data: { success: true },
+        error: null
       };
+    } catch (error) {
+      return { success: false, data: null, error: error.message };
     }
-    items.splice(index, 1);
-    saveData(items);
-    return {
-      success: true,
-      data: { success: true },
-      error: null
-    };
   }
 };
+

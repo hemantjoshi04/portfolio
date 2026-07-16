@@ -12,12 +12,21 @@ const UploadModal = ({ isOpen, initialData, onClose, onSave }) => {
   });
   
   const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
     }
   }, [initialData]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   if (!isOpen) return null;
 
@@ -32,12 +41,16 @@ const UploadModal = ({ isOpen, initialData, onClose, onSave }) => {
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
+
       setIsUploading(true);
       const res = await portfolioService.uploadImage(file);
       if (res.success) {
         setFormData(prev => ({ ...prev, imageUrl: res.data.url }));
       } else {
         alert('Upload failed');
+        setPreviewUrl(null);
       }
       setIsUploading(false);
     }
@@ -66,12 +79,12 @@ const UploadModal = ({ isOpen, initialData, onClose, onSave }) => {
 
         {/* Image Dropzone */}
         <div className="relative border-2 border-dashed border-outline-variant p-8 lg:p-12 text-center flex flex-col items-center justify-center gap-4 hover:border-secondary hover:bg-primary-container transition-all overflow-hidden group">
-           {formData.imageUrl ? (
-              <img src={formData.imageUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-30 transition-opacity" />
+           {(previewUrl || formData.imageUrl) ? (
+              <img src={previewUrl || formData.imageUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-30 transition-opacity" />
            ) : null}
           <input 
             type="file" 
-            accept="image/jpeg, image/png"
+            accept="image/jpeg,image/png,image/webp"
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             onChange={handleFileChange}
           />
@@ -81,8 +94,8 @@ const UploadModal = ({ isOpen, initialData, onClose, onSave }) => {
              ) : (
                 <span className="material-symbols-outlined text-4xl text-secondary">cloud_upload</span>
              )}
-             <p className="font-body-md">{isUploading ? 'Uploading...' : (formData.imageUrl ? 'Replace Image' : 'Drag and drop high-res image here')}</p>
-             <p className="font-label-caps text-[10px] text-on-surface-variant mt-2">JPG, PNG up to 20MB</p>
+             <p className="font-body-md">{isUploading ? 'Uploading...' : ((previewUrl || formData.imageUrl) ? 'Replace Image' : 'Drag and drop high-res image here')}</p>
+             <p className="font-label-caps text-[10px] text-on-surface-variant mt-2">JPG, PNG, WEBP up to 20MB</p>
           </div>
         </div>
 

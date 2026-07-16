@@ -18,7 +18,7 @@ const PortfolioCard = ({ item, index, variant, onEdit, onDelete, onDragStart, on
           <img 
             src={item.imageUrl} 
             alt={item.altText || item.title} 
-            className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${!item.visible ? 'opacity-50 grayscale' : ''}`} 
+            className={`w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105 ${!item.visible ? 'opacity-50 grayscale' : ''}`} 
           />
            {!item.visible && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/10">
@@ -57,7 +57,7 @@ const PortfolioCard = ({ item, index, variant, onEdit, onDelete, onDragStart, on
         <img 
           src={item.imageUrl} 
           alt={item.altText || item.title} 
-          className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${!item.visible ? 'opacity-50 grayscale' : ''}`}
+          className={`w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105 ${!item.visible ? 'opacity-50 grayscale' : ''}`}
         />
          {!item.visible && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/10">
